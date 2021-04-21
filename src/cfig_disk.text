@@ -1,0 +1,49 @@
+{$S++}
+{$I *GLOBAL.II0  }   {  Insert system glogals file  }
+    
+SEGMENT PROCEDURE disk_config ( input_fib, output_fib:  FIB );
+
+
+CONST
+  
+  unitnum = 5;                  {  number of unit to do disk_config on  }
+  firstdsk = 4;                 {  number of first disk unit  }
+
+  {  Symbols describing the disk request block passed between the
+     interpreter and MONITOR.  These symbol definitions are lifted
+     from MONINC.  }
+
+ c_drqfmt = 4;          {  offset of byte containing format code  }
+ c_drqflg = 5;          {  offset of byte containing flags  }
+
+ fmtsm = 32;            {  format code (decimal) for small sectors  }
+ fmtbg = 54;            {  format code (decimal) for large sectors  }
+
+ v_drqnrc = 64;         {  no recovery flag bit  }
+
+TYPE
+  p_reqblk = ^ dsk_req_blk;
+
+
+VAR
+  p_unitblk:  p_reqblk;              {  pointer to the unit's request block  }
+
+BEGIN                   {  SEGMENT PROCEDURE disk_config  }
+
+p_unitblk := syscom ^ . p_blkarray ^ [ unitnum - firstdsk + 1 ];
+
+IF ( p_unitblk ^ [ c_drqflg ] >= v_drqnrc ) THEN
+  BEGIN
+  p_unitblk ^ [ c_drqflg ] := p_unitblk ^ [ c_drqflg ] - v_drqnrc;
+  WRITELN ( 'Unit 5 set for standard error recovery.' );
+  END
+ELSE
+  BEGIN
+  p_unitblk ^ [ c_drqflg ] := p_unitblk ^ [ c_drqflg ] + v_drqnrc;
+  WRITELN ( 'Unit 5 set for no error recovery.' );
+  END;
+
+END;                    {  SEGMENT PROCEDURE disk_config  }
+
+BEGIN  END.             {  dummy segment 0  }
+
