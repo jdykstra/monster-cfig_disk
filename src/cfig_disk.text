@@ -1,13 +1,13 @@
 {$S++}
-{$I *GLOBAL.II0  }   {  Insert system glogals file  }
-    
+{$I *GLOBAL.II0  }   {  Insert system globals file  }
+
 SEGMENT PROCEDURE disk_config ( input_fib, output_fib:  FIB );
 
 
 CONST
-  
-  unitnum = 5;                  {  number of unit to do disk_config on  }
+
   firstdsk = 4;                 {  number of first disk unit  }
+  maxunit = 99;                {  maximum legal unit number (arbitrary) }
 
   {  Symbols describing the disk request block passed between the
      interpreter and MONITOR.  These symbol definitions are lifted
@@ -26,21 +26,31 @@ TYPE
 
 
 VAR
+  unitnum:  INTEGER;    { logical unit number to configure }
   p_unitblk:  p_reqblk;              {  pointer to the unit's request block  }
-
+  legal:  BOOLEAN;      {  Hava legal unit number }
 BEGIN                   {  SEGMENT PROCEDURE disk_config  }
+
+legal := FALSE;
+REPEAT
+  BEGIN
+  WRITE ( 'Logical disk unit to configure:  ' );
+  READLN ( unitnum );
+  legal := ( unitnum >= firstdsk ) AND (unitnum < maxunit );
+  END;
+UNTIL ( legal );
 
 p_unitblk := syscom ^ . p_blkarray ^ [ unitnum - firstdsk + 1 ];
 
 IF ( p_unitblk ^ [ c_drqflg ] >= v_drqnrc ) THEN
   BEGIN
   p_unitblk ^ [ c_drqflg ] := p_unitblk ^ [ c_drqflg ] - v_drqnrc;
-  WRITELN ( 'Unit 5 set for standard error recovery.' );
+  WRITELN ( 'Unit ', unitnum, ' set for standard error recovery.' );
   END
 ELSE
   BEGIN
   p_unitblk ^ [ c_drqflg ] := p_unitblk ^ [ c_drqflg ] + v_drqnrc;
-  WRITELN ( 'Unit 5 set for no error recovery.' );
+  WRITELN ( 'Unit ', unitnum, ' set for no error recovery.' );
   END;
 
 END;                    {  SEGMENT PROCEDURE disk_config  }
